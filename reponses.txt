@@ -1,0 +1,48 @@
+--------- 1.1 Exécution locale
+1 - 
+ Map input records : nombre de lignes dans le fichier en entrée
+ Map output records : nombre total des occurences calculées au cours du Map
+2 -
+Map output records et Reduce input records :
+Le résultats de la phase du Map est l'entrée de la phase du Reduce
+3 -
+Reduce input groups : c'est le nombre de groupes trouvés lors de la combinaison des clés resultant de la phase Map
+
+
+--------- 1.2 Premier contact avec HDFS
+quel est le chemin, dans HDFS, vers votre répertoire personel ?
+/user/elhaddam
+/user/martijua
+
+
+--------- 1.3 - Exécution sur le cluster
+Le compteur de nombre de splits correspand au nombre de découpes du fichier en entrée et qui est repartie sur les jobs.
+
+--------- 1.4 - Combiner et nombre de reducers
+1. Quelle est la diérence entre le répertoire de résultats obtenu ici, et celui de la partie 1.3 ?
+Pourquoi ?
+La différence est au niveau de "Launched reduce tasks" 
+-Launched reduce tasks=3 pour cette execution
+-Launched reduce tasks=1 pour la première execution
+avec une différence sur les access au blocks
+Data-local map tasks=3 contre Data-local map tasks=4
+Rack-local map tasks=2 contre Rack-local map tasks=1 
+
+2. Quels compteurs permettent de vérier que le combiner a fonctionné ?
+C'est les compteurs :
+Combine input records=421739
+Combine output records=85301 
+
+3. Quels compteurs permettent d'estimer le gain eectivement apporté par le combiner ? Com-
+parez aux valeurs obtenues sans combiner pour justier votre réponse.
+
+C'est le compteur :Spilled Records
+sans combiner : 843478
+avec combiner : 170602
+
+le faite d'utiliser le combiner reduit les resultats à traités par le Reduce et du coups il reduit le nombre de donnée ecrits sur disque lorsque la taille de données dépasse la taille du buffer clé/valeur.
+
+-------------- 2 - Top-tags Flickr par pays, avec tri en mémoire -------------------------
+
+
+
