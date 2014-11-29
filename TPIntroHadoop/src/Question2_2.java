@@ -8,9 +8,11 @@ import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.Text;
+import org.apache.hadoop.io.Writable;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.Mapper;
 import org.apache.hadoop.mapreduce.Reducer;
+import org.apache.hadoop.mapreduce.Reducer.Context;
 import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.mapreduce.lib.input.TextInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
@@ -19,7 +21,7 @@ import org.apache.hadoop.util.GenericOptionsParser;
 
 import com.google.common.collect.MinMaxPriorityQueue;
 
-public class Question2_1 {
+public class Question2_2 {
 	public static class MyMapper extends Mapper<LongWritable, Text, Text, Text> {
 
 		@Override
@@ -44,14 +46,16 @@ public class Question2_1 {
 		}
 	}
 
-	public static class MyReducer extends Reducer<Text, Text, Text, Text> {
+	public static class MyCombiner extends Reducer<Text, Text, Text, Text> {
+
 		@Override
 		protected void reduce(Text key, Iterable<Text> values, Context context)
 				throws IOException, InterruptedException {
 
+			HashMap<String, Integer> map = new HashMap<String, Integer>();
 			Configuration configuration = context.getConfiguration();
 			int k = Integer.parseInt(configuration.get("k"));
-			HashMap<String, Integer> map = new HashMap<String, Integer>();
+
 			MinMaxPriorityQueue<StringAndInt> maxOccurenceQueue = MinMaxPriorityQueue
 					.maximumSize(k).create();
 
@@ -66,8 +70,8 @@ public class Question2_1 {
 			}
 
 			for (Map.Entry<String, Integer> entry : map.entrySet()) {
-				maxOccurenceQueue.add(new StringAndInt(entry.getKey(), entry
-						.getValue()));
+				maxOccurenceQueue.add(new StringAndInt(
+						new Text(entry.getKey()), entry.getValue()));
 
 			}
 
@@ -75,9 +79,21 @@ public class Question2_1 {
 					.hasNext();) {
 				StringAndInt stringAndInt = (StringAndInt) iterator.next();
 
-				context.write(key, new Text(stringAndInt.getTag()));
+				context.write(key, stringAndInt.getTtag());
 			}
 
+		}
+
+	}
+
+	public static class MyReducer extends Reducer<Text, Text, Text, Text> {
+		@Override
+		protected void reduce(Text key, Iterable<Text> values, Context context)
+				throws IOException, InterruptedException {
+
+			for (Text tag : values) {
+				context.write(key, tag);
+			}
 		}
 	}
 
@@ -90,15 +106,15 @@ public class Question2_1 {
 
 		conf.set("k", args[2]);
 
-		Job job = Job.getInstance(conf, "Question2_1");
-		job.setJarByClass(Question2_1.class);
+		Job job = Job.getInstance(conf, "Question2_2");
+		job.setJarByClass(Question2_2.class);
 
 		job.setMapperClass(MyMapper.class);
 		job.setMapOutputKeyClass(Text.class);
 		job.setMapOutputValueClass(Text.class);
 
-		// job.setCombinerClass(MyReducer.class);
-		// job.setNumReduceTasks(3);
+		job.setCombinerClass(MyCombiner.class);
+		job.setNumReduceTasks(3);
 
 		job.setReducerClass(MyReducer.class);
 		job.setOutputKeyClass(Text.class);
