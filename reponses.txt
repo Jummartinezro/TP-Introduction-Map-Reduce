@@ -60,13 +60,44 @@ Reducer: 	<Text, StringAndInt, Text,StringAndInt>
 
 -------------- 3 Top-tags Flickr par pays, avec tri par Hadoop -------------------------
 
-Question préliminaire : spéci􏰅ez les 2 jobs nécessaires (le second va utiliser le résultat du premier), en précisant le type des clés/valeurs en entrée, sortie et intérmédiaires. Pour le second, spéci􏰅ez aussi les comparateurs à utiliser pour le tri et pour le découpage en groupes.
+Question préliminaire : spéci􏰅fiez les 2 jobs nécessaires (le second va utiliser le résultat du premier), en précisant le type des clés/valeurs en entrée, sortie et intérmédiaires. Pour le second, spécifi􏰅ez aussi les comparateurs à utiliser pour le tri et pour le découpage en groupes.
 
-Entrée: 	(Pays,Tag)
-Intermediaire:	((Pays,Nombre),Tag)
-Sortie:		(Pays, Nombre, Tag)
+Premier Job:
+	Mapper:		<LongWritable, Text, Text,Text> 
+			Entrée: Le Text
+			Sortie: (Pays, Tag) compté 1 fois
+
+	Reducer:	<Text, Text, Text,Int>
+			Entrée: (Pays,Tag), 1 fois
+			Sortie: (Pays,Tag), Nb fois
+Deuxième Job:		
+	Mapper:		<Text, Int, StringAndInt, Text> 
+			Entrée: (Pays,Tag), Nb fois
+			Sortie: (Pays,Nb fois), Tag
+
+	Intermediaire:	<StringAndInt, Text, StringAndInt, Text> 
+			Entrée: (Pays,Nb fois), Tag
+			Sortie: (Pays,Nb fois), Tag (Mais organisé par groupes (Pays,Nb fois))
+			(Le comparateur est le clé (Pays,Nb fois))
+
+	Reducer:	<StringAndInt, Text, StringAndInt,Text>
+			Entrée: (Pays,Nb fois), Tag
+			Sortie: (Pays,Nb fois), Tag
+
+3.1. Un avantage de cette méthode est que le tri est réalisé sur le disque dur des data nodes, plutôt qu'en mémoire : on peut donc trier des quantités de données plus importantes. Dans notre application, cette méthode présente un autre avantage pour la fonction reduce 􏰅finale; lequel ?
 
 
 
+3.1.2. S’il existe des tags classés ex aequo dans le top-K d'un pays, a-t-on la garantie d'obtenir toujours le même résultat d'une éxécution à l'autre ? Pourquoi ?
 
-Le premier job consist à grouper en utilisant Job.setGroupingComparatorClass(Class). En suite on fait le tri en utilisant Job.setSortComparatorClass(Class).
+
+
+3.2.1. Le 􏰅chier complet pèse 44.4 Go, et nous utilisons des blocs de 64Mo. Avec combien de machines le premier map sera le plus rapide possible ?
+
+
+3.2.2. Une fois que nous utilisons ce partitioner, le deuxième job génère-t-il des transferts de données sur le réseau ? Pourquoi ?
+
+
+3.2.3. En pratique : si les deux jobs utilisent job.setNumReduceTasks(3), d'après les compteurs que se passe-t-il ?
+
+
