@@ -44,5 +44,29 @@ le faite d'utiliser le combiner reduit les resultats à traités par le Reduce e
 
 -------------- 2 - Top-tags Flickr par pays, avec tri en mémoire -------------------------
 
+2.1 Pour pouvoir utiliser un combiner, quel devrait être le type des données intermédiaires ? Donnez le type sémantique (que représentent ces clés-valeurs ?) et le type Java.
+
+Au debut de l’expérience, le combiner aura comme entrée la même sortie que celle du mapper. C’est-à-dire une clé <Text,Text> représentant le nom du pays et un tag associé. Comme sortie il devrait avoir aussi la même sortie reçue par le reducer: une clé <Text,StringAndInt> représentant le nom du pays et le tag avec le nombre d’occurrences.
+
+2.2 Dans le reducer, nous avons une structure en mémoire dont la taille dépend du nombre de tags distincts : on ne le connaît pas a priori, et il y en a potentiellement beaucoup. Est-ce un problème ?
+
+Après l’expérience, nous avons nous rendu compte que s’il y a beaucoup de données, alors Hadoop va utiliser le combiner. Par contre, quand il y en a pas beaucoup, Hadoop ne l’utilise pas. Comme la sortie du combiner et la sortie du reducer ne sont pas les mêmes, alors il y aura un problème.
+
+Pour cette raison la sortie du mapper et la sortie du reducer devront être les mêmes. Après l’expérience, nous avons les types d’entrée-sortie suivants:
+
+Mapper:		<LongWritable, Text, Text,StringAndInt>
+Combiner: 	<Text, StringAndInt, Text,StringAndInt>
+Reducer: 	<Text, StringAndInt, Text,StringAndInt>
+
+-------------- 3 Top-tags Flickr par pays, avec tri par Hadoop -------------------------
+
+Question préliminaire : spéci􏰅ez les 2 jobs nécessaires (le second va utiliser le résultat du premier), en précisant le type des clés/valeurs en entrée, sortie et intérmédiaires. Pour le second, spéci􏰅ez aussi les comparateurs à utiliser pour le tri et pour le découpage en groupes.
+
+Entrée: 	(Pays,Tag)
+Intermediaire:	((Pays,Nombre),Tag)
+Sortie:		(Pays, Nombre, Tag)
 
 
+
+
+Le premier job consist à grouper en utilisant Job.setGroupingComparatorClass(Class). En suite on fait le tri en utilisant Job.setSortComparatorClass(Class).
